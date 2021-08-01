@@ -1,0 +1,42 @@
+LOAD CSV WITH HEADERS FROM "file:///Vehicles_2015.csv" AS ROW RETURN ROW LIMIT 5
+
+
+
+:auto USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "file:///Accidents_2015.csv" AS ROW
+MERGE (a:Accident {accidentIndex: ROW.Accident_Index})
+ON CREATE SET a.severity = toInteger(ROW.Accident_Severity)
+#########################################################33
+
+:auto USING PERIODIC COMMIT
+
+LOAD CSV WITH HEADERS FROM "file:///Vehicles_2015.csv" AS ROW
+
+MATCH (a:Accident {accidentIndex: ROW.Accident_Index})
+
+CREATE (v:Vehicle)
+SET v += ROW
+
+CREATE (a)-[:INVOLVES]->(v)
+#########################################################
+
+LOAD CSV WITH HEADERS FROM "file:///Vehicle_Type_Lookup.csv" AS ROW
+MERGE(t:VehicleType {code: ROW.code})
+SET t.name = ROW.label
+WITH t, ROW
+MATCH (v:Vehicle) WHERE v.Vehicle_Type = ROW.code
+CREATE (v)-[:IS_TYPE]->(t)
+########################################################
+CALL db.schema.visualization()
+########################################################
+MATCH (t:VehicleType) WHERE t.name CONTAINS "Motorcycle"
+RETURN t.name
+#######################################################3
+MATCH (a:Accident)-[:INVOLVES]->(v:Vehicle)-[:IS_TYPE]->(t:VehicleType) WHERE t.name CONTAINS "Motorcycle"
+RETURN a.severity
+##########################################################
+MATCH (a:Accident)-[:INVOLVES]->(v:Vehicle)-[:IS_TYPE]->(t:VehicleType) WHERE t.name CONTAINS "Motorcycle"
+RETURN avg(a.severity) AS avg_severity
+###########################################################
+MATCH (a:Accident)-[:INVOLVES]->(v:Vehicle)-[:IS_TYPE]->(t:VehicleType) WHERE t.name CONTAINS "Motorcycle"
+RETURN t.name, avg(a.severity) AS avg_severity

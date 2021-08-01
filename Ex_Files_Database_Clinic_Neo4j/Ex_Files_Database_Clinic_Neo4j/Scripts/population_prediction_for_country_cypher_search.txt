@@ -1,0 +1,19 @@
+// traversal pattern
+MATCH (p:PopulationPrediction)-[:FOR_COUNTY]->(c:County)
+// starting point filter
+WHERE p.year = 2014 AND p.gender = "Female"
+// aggregation
+RETURN c.name, sum(p.population)
+###############################################
+CREATE INDEX ON :PopulationPrediction(year)
+###############################################
+// traversal pattern
+MATCH (p:PopulationPrediction)-[:FOR_COUNTY]->(c:County)
+// starting point filter
+WHERE p.year = 2014 AND p.gender = "Female"
+// aggregation
+WITH c, sum(p.population) AS Female
+MATCH (p:PopulationPrediction)-[:FOR_COUNTY]->(c)
+WHERE p.year = 2014 AND p.gender = "Male"
+RETURN c.name AS `Year:2014`, Female, sum(p.population) AS Male
+ORDER BY c.name

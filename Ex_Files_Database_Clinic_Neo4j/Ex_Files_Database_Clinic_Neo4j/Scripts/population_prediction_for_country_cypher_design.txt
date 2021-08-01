@@ -1,0 +1,4 @@
+CREATE 
+  (`0` :County {`County Code`:'string,',`County Name`:'string'}) ,
+  (`2` :PopulationPrediction {`Race Code`:'integer,',`Race Name`:'string,',Gender:'string,',Age:'integer,',Population:'integer'}) ,
+  (`2`)-[:`FOR_COUNTY` ]->(`0`)

@@ -1,0 +1,54 @@
+CREATE (c: County {name: "Alameda", code: "6001"})<-[:FOR_COUNTY]-(p:PopulationPrediction {race_code: "1", race_name: "White, Non-Hispanic", gender: "Female", age: 0, population: 2078 })
+
+MATCH (c) DETACH DELETE c
+
+LOAD CSV WITH HEADERS FROM "file:///CA_DRU_proj_2010-2060.csv" AS ROW
+RETURN ROW LIMIT 5
+
+LOAD CSV WITH HEADERS FROM "file:///CA_DRU_proj_2010-2060.csv" AS ROW
+RETURN COUNT(ROW)
+
+CREATE CONSTRAINT ON (c:County) ASSERT c.code IS UNIQUE;
+
+:auto USING PERIODIC COMMIT 500000
+LOAD CSV WITH HEADERS FROM "file:///CA_DRU_proj_2010-2060.csv" AS ROW
+WITH DISTINCT ROW.`County Code` AS county_code, ROW.`County Name` AS county_name MERGE (c: County {code: toInteger(county_code) })
+ON CREATE SET c.name = county_name
+
+###PERIODIC COMMIT means we'll run in batches
+
+
+
+:auto USING PERIODIC COMMIT 100000
+
+LOAD CSV WITH HEADERS FROM "file:///CA_DRU_proj_2010-2060.csv" AS ROW
+
+MATCH (c: County {code: toInteger(ROW.`County Code`)})
+
+CREATE (po: PopulationPrediction)
+SET po.year = toInteger(ROW.Year),
+    po.race = ROW.`Race Name`,
+    po.age = toInteger(ROW.Age),
+    po.gender = ROW.Gender,
+    po.population = toInteger(ROW.Population)
+
+CREATE (po)-[:FOR_COUNTY]->(c)
+
+#####################################Queries
+
+CALL db.schema.visualization()
+
+MATCH (c:County)
+WHERE c.name = "San Mateo"
+RETURN c
+
+
+###################################
+MATCH (c:County)<-[:FOR_COUNTY]-(p:PopulationPrediction)
+WHERE c.name = "San Mateo"
+RETURN COUNT(p)
+
+
+MATCH (c:County)<-[:FOR_COUNTY]-(p:PopulationPrediction)
+WHERE c.name = "San Mateo" AND p.year = 2050
+RETURN SUM(p.population)

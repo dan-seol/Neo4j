@@ -1,0 +1,6 @@
+CREATE 
+  (`0` :Accident {accidentIndex:'string,',severity:'integer,'}) ,
+  (`1` :Vehicle ) ,
+  (`2` :VehicleType {name:'string,',code:'string'}) ,
+  (`0`)-[:`INVOLVES` ]->(`1`),
+  (`1`)-[:`IS_TYPE` ]->(`2`)
