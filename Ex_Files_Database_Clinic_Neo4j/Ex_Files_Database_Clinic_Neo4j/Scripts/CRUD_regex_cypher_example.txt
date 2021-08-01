@@ -1,0 +1,1 @@
+Regex is possible: e.g.) MATCH (l:Line) WHERE l.text =~ '(?i)*.Lysander.*' not built in apoc.text.replace(l.text, '(?i)*.Lysander.*', Lysander)

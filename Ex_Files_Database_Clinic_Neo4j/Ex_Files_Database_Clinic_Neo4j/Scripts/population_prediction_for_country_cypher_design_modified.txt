@@ -1,0 +1,8 @@
+CREATE 
+  (`0` :County {`County Code`:'string,',`County Name`:'string'}) ,
+  (`1` :PopulationPrediction {`Race Code`:'integer,',`Race Name`:'string,',Gender:'string,',Age:'integer,',Population:'integer'}) ,
+  (`1`)-[:`FOR_COUNTY` ]->(`0`),
+  (`2` : EducationObservation {population: integer, year:integer, income:string, age:string, education:string, gender:string}),
+  (`3`: Year {year:integer}),
+  (`1`)-[:`FOR_YEAR`]->(`3`),
+  (`2`)-[:`FOR_YEAR`]->(`3`)

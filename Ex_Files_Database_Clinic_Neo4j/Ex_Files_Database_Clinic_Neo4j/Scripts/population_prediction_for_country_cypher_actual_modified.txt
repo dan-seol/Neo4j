@@ -1,0 +1,47 @@
+MATCH (y:Year)
+MATCH (p:PopulationPrediction) WHERE p.year = y.year
+CREATE (p)-[:FOR_YEAR]->(y)
+
+
+CALL apoc.periodic.iterate("MATCH (y:Year) RETURN y", "MATCH (p:PopulationPrediction) WHERE p.year = y.year CREATE (p)-[:FOR_YEAR]->(y)", {batchSize:1, parallel:true, iterateList:true})
+
+
+LOAD CSV WITH HEADERS  FROM "file:///CA_Educational_Attainment___Personal_Income_2008-2014.csv" AS row RETURN apoc.date.fields(row.Year, 'MM/dd/yyyy hh:mm:ss a') LIMIT 5
+
+LOAD CSV WITH HEADERS  FROM "file:///CA_Educational_Attainment___Personal_Income_2008-2014.csv" AS row WITH row, apoc.date.fields(row.Year, 'MM/dd/yyyy hh:mm:ss a')['years'] AS parsed_year
+
+MATCH (y:Year) WHERE y.year = parsed_year
+
+CREATE (e:EducationObservation)
+SET e.population = toInteger(row.`Population Count`),
+e.year = parsed_year,
+e.income = row.`Personal Income`,
+e.age = e.Age,
+e.education = row.`Educational Attainment`,
+e.gender = row.Gender
+
+CREATE (y)<-[:FOR_YEAR]-(e)
+
+#################################################################
+MATCH (p:PopulationPrediction)-[:FOR_YEAR]->(y:Year)
+RETURN y.year AS year, sum(p.population) AS population ORDER BY year
+
+MATCH (e:EducationObservation) WITH sum(e.population) AS total
+MATCH (e:EducationObservation) RETURN e.education AS education, toFloat(sum(e.population)) / total AS percentage
+
+MATCH (p:PopulationPrediction)-[:FOR_YEAR]->(y:Year) WHERE p.age < 15
+RETURN y.year AS year, p.gender AS gender, sum(p.population) ORDER BY year
+
+
+MATCH (p:PopulationPrediction)-[:FOR_YEAR]->(y:Year) WHERE p.age < 15
+WITH y, y.year AS year, p.gender AS gender, sum(p.population) AS population ORDER BY year
+
+MATCH (e:EducationObservation)-[:FOR_YEAR]->(y) WHERE e.education = "Children under 15" AND e.gender = gender
+
+SET e.population = population
+##############################################################################
+
+MATCH (e:EducationObservation) WITH sum(e.population) AS total
+MATCH (e:EducationObservation) RETURN e.education AS education, toFloat(sum(e.population)) / total AS percentage
+
+MATCH (p:PopulationPrediction)-[:FOR_YEAR]->(y:Year) RETURN education, toInteger(sum(p.population)*percentage), y.year AS year ORDER BY year
